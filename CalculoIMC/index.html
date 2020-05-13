@@ -1,0 +1,112 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora IMC</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <h1>Calculadora <strong>IMC</strong></h1>
+        <form id="formIMC">
+            <input type="number" step="0.01" name="peso" placeholder="Entre com o peso...">
+            
+            <input type="number" step="0.01" name="altura" placeholder="Entre com a altura...">
+            
+            <button type="submit">Calcular</button>
+            
+            <div id="resultado"></div>
+        </form>
+        <button id="btnHistory">&#128336; Histórico</button>
+        <div id="history" class="fade-in"></div>
+
+    </main>
+
+
+    <script type="module">
+        
+        // importando as formulas de calculo do IMC
+       import IMC from './IMC.js'
+       import IMCHistory from './imcHistory.js' 
+       
+        // Recuperando formalário
+        const form = document.forms['formIMC']
+        
+        // o códifo ficara esctutando o evento submit
+        // este evento ocorre ao clicar no button do type=submit
+        form.addEventListener('submit', (event) => {
+            // previne comportamento padrão do navegador ao submeter o form
+            event.preventDefault()
+
+            // lendo peso do usuário
+            let peso = form.peso.value        
+            // lendo altura do usuário
+            let altura = form.altura.value
+        
+            // se um dos dois campos não for informado encerra a execução
+            if (!peso || !altura) return;
+
+            // convertento ponto em virgula
+            peso = peso.replace(',','.')
+            altura = altura.replace(',','.')    
+
+            // convertendo String em Float
+            peso = Number.parseFloat(peso)
+            altura = Number.parseFloat(altura)
+       
+            // instanciando um novo objeto da classe IMC
+            const imc = new IMC(peso, altura)
+            
+            // chama função para calcular o IMC
+            imc.calcular(peso,altura)
+
+            // chama função para apresentar a resposta
+            apresentarResposta(imc);
+
+            // salvando dados no localstorage
+            const history = new IMCHistory()
+            history.add(imc)
+        })
+
+        const apresentarResposta = (imc) => {
+            const div = document.getElementById('resultado')
+            if (div.classList.contains('visible')){
+                div.classList.remove('visible')
+            }
+
+            div.innerHTML = `
+            <h3>${imc.imc.toFixed(1)} kg/m²</h3>
+            <h2>${imc.classificacao}</h2>
+            <p><strong>O que pode acontecer:</strong></p>
+            <p>${imc.consequencia}</p>
+            `
+            setTimeout(()=> div.classList.add('visible'), 500)
+        }
+        
+        const btnHistory = document.getElementById('btnHistory')
+        btnHistory.addEventListener('click', () => {
+            const history = new IMCHistory()
+            apresentarHistorico(history)
+        })
+
+        const apresentarHistorico = (history) => {
+            const div = document.getElementById('history')
+            if (div.classList.contains('visible')){
+                div.classList.remove('visible')
+            }
+
+            div.innerHTML = history.history.reduce((template, hist)=>{
+                const data = new Date(hist._data)
+                return template + `
+                    <div class = "imc">
+                        <p>${data.toLocaleDateString()}<p>
+                        <h3>${hist._imc.toFixed(1)} Kg/m²</h3>
+                        <h2>${hist._classificacao}</h2>
+                    </div>
+                `
+            }, '')            
+            setTimeout(()=> div.classList.add('visible'), 500)
+        }
+    </script>
+</body>
+</html>
